@@ -35,3 +35,10 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+#others#
+########
+cache
+cache/*
+phpmyadmin
+phpmyadmin/*
