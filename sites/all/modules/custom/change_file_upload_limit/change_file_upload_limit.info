@@ -1,0 +1,7 @@
+name = Change File Upload Limit
+description = Help admin to change file upload limit without changing php.ini file.
+package = Fields
+core = "7.x"
+configure = admin/config/file_upload_limit
+
+

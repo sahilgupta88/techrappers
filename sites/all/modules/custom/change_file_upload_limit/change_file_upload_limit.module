@@ -1,0 +1,143 @@
+<?php
+/**
+ * @file
+ * The Change File Upload Limit module controls the file upload limit on the website and can be managed by admins to increase the limits for uploading heavey files as exception.
+ *
+ * The admin UI is available at /admin/config/file_upload_limit.
+ * Permissions can be configured on permissions page
+ */
+ 
+/**
+ * Implements hook_permission().
+ */
+function change_file_upload_limit_permission() {
+  return array(
+    'Change file upload limit settings' => array(
+      'title' => t('Change file upload limit'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function change_file_upload_limit_menu() {
+  $items['admin/config/file_upload_limit'] = array(
+    'title' => 'Change file upload limit',
+    'description' => 'Help admin to change file upload limit without changing php.ini file',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('change_file_upload_limit_custom_settings'),
+    'access arguments' => array('Change file upload limit settings'),
+    'file' => 'change_file_upload_limit.module',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  
+  return $items;
+}
+
+/**
+ * Custom settings page: menu callback.
+ */
+function change_file_upload_limit_custom_settings() {
+  // Set all the fields on file upload form
+  $form['change_file_upload_limit_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Change file upload limit'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  
+ $form['change_file_upload_limit_fieldset']['custom_upload_limit_turn_option'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Activate/Deactivate file upload limit'),
+    '#default_value' => variable_get('custom_upload_limit_turn_option', 0),
+	'#element_validate' => array('_check_AllowOverride_value_apache'), 
+    '#description' => t('Enable/Disable custom file upload limit. If you uncheck this option then this module will not affect anything even if its active on module page.')
+  );
+  
+  $form['change_file_upload_limit_fieldset']['custom_upload_limit'] = array(
+    '#type' => 'textfield',
+    '#title' => t('File upload limit'),
+    '#default_value' => variable_get('custom_upload_limit', 0),
+    '#description' => t('Enter the size in MB'),
+    '#element_validate' => array('_change_file_upload_limit_validate'), 
+    '#maxlength' => 3,
+    '#size' => 5,
+    '#required' => TRUE,    
+  );
+  
+  // Set a submit handler manually because the default submit handler
+  // gets overridden by the system_settings_form() submit handler.  
+  $form = system_settings_form($form);
+  $form['#submit'][] = '_change_file_values';
+  return $form;
+}
+
+function _check_AllowOverride_value_apache() {
+  global $base_url;
+  $file_as_array = file('.htaccess');
+  $file_as_array[] = "\n" . 'php_value post_max_size ' . $new_limit . 'M' . "\n";
+  $file_as_array[] = 'php_value upload_max_filesize ' . $new_limit . 'M';
+	$ch = curl_init($base_url);
+	curl_setopt($base_url, CURLOPT_HEADER, true);    // we want headers
+	curl_setopt($base_url, CURLOPT_NOBODY, true);    // we don't need body
+	curl_setopt($base_url, CURLOPT_RETURNTRANSFER,1);
+	curl_setopt($base_url, CURLOPT_TIMEOUT,10);
+	$output = curl_exec($base_url);
+	$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	curl_close($ch);
+
+	if($httpcode == 500) {
+	  form_set_error('custom_upload_limit', 'You must provide a valid integer for upload limit.');
+	};
+}
+
+/**
+ * Function to remove upload parameters, if they already exist, append new ones. After all changes made save and close the file to free up resources.
+ */
+function _change_file_values($form, &$form_state) {
+  $file_as_array = file('.htaccess');
+  if ($form_state['values']['custom_upload_limit_turn_option']) {
+    $new_limit = $form_state['values']['custom_upload_limit'];	
+    $file_as_array = _remove_old_file_data($file_as_array);
+
+    $file_as_array[] = "\n" . 'php_value post_max_size ' . $new_limit . 'M' . "\n";
+    $file_as_array[] = 'php_value upload_max_filesize ' . $new_limit . 'M';
+  }
+  else {
+    $file_as_array = _remove_old_file_data($file_as_array);
+  }
+  _save_and_close_file($file_as_array);
+}
+
+/**
+ * Function to remove upload parameters, if they already exist, so that we can write the new parameters.
+ */
+function _remove_old_file_data($file_as_array) {
+  foreach ($file_as_array as $file_array_key => $file_array_val) {
+    if (preg_match('/post_max_size/', $file_array_val ) || preg_match('/upload_max_filesize/', $file_array_val)) {
+      unset($file_as_array[$file_array_key]);
+    } 
+  }
+  return $file_as_array;
+}
+
+/**
+ * Function to save and then close file with all changes.
+ */
+function _save_and_close_file($file_as_array) {
+  $new_file_contents = implode("", $file_as_array);
+  $fp = fopen('.htaccess', 'w');
+  fwrite($fp, $new_file_contents);
+  fclose($fp);  	
+}
+
+/**
+ * Function to check that limit should be always positive or a floating value.
+ */
+function _change_file_upload_limit_validate($form, &$form_state) {
+  if (!(is_numeric($form_state['values']['custom_upload_limit'])) || ($form_state['values']['custom_upload_limit'] < 0)) {
+    form_set_error('custom_upload_limit', 'You must provide a valid integer for upload limit.');
+  }
+}
+

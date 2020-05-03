@@ -1,0 +1,70 @@
+/**
+ * @file
+ * Styles are organized using the SMACSS technique. @see http://smacss.com/book/
+ *
+ * When you turn on CSS aggregation at admin/config/development/performance, all
+ * of these @include files will be combined into a single file.
+ */
+
+/* HTML element (SMACSS base) rules */
+@import "normalize.css";
+
+/* Layout rules */
+@import "layouts/responsive.css";
+
+/* Component (SMACSS module) rules */
+@import "components/misc.css";
+/* Optionally, add your own components here. */
+@import "print.css";
+
+/* SMACSS theme rules */
+/* @import "theme-A.css"; */
+/* @import "theme-B.css"; */
+
+#header{
+	padding:10px 10px 0 10px;
+	margin:0 -10px;
+	border-bottom: 2px solid #1288B4;
+    box-shadow: 1px 1px 3px #ccc;
+}
+#logo img{
+	height:65px;
+	width:auto;
+}
+#page, .region-bottom{
+	max-width:none;
+	padding:0 10px;
+}
+.with-wireframes #header, .with-wireframes #main, .with-wireframes #content, .with-wireframes #navigation, .with-wireframes .region-sidebar-first, .with-wireframes .region-sidebar-second, .with-wireframes #footer, .with-wireframes .region-bottom{
+	outline:none;
+}
+.region-sidebar-second{
+	border-left:5px solid #fff;
+}
+#main{
+	max-width: 96%;
+}
+
+#rate-button-1 {
+	background-image: url(/sites/all/themes/techrappers/images/tr-arrow-up.png);
+    color: transparent!important;
+    background-repeat: no-repeat;
+}
+
+#rate-button-2 {
+	background-image: url(/sites/all/themes/techrappers/images/tr-arrow-down.png);
+    color: transparent!important;
+    background-repeat: no-repeat;
+}
+
+.node-type-drupal-posts.section-post .field-name-body {
+    margin-left: 130px;
+    margin-top: -135px;
+}
+.node-type-drupal-posts.section-post .rate-widget .last{
+	margin: 49px 0px 5px -39px;
+}
+
+.node-type-drupal-posts.section-post .form-type-item label{
+	display:none;
+}
