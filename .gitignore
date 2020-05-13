@@ -36,9 +36,13 @@
 ehthumbs.db
 Thumbs.db
 
-#others#
+# Cache Files #
+###############
+sites/default/files/css/*
+sites/default/files/js/*
+
+# Others #
 ########
 cache
 cache/*
-phpmyadmin
-phpmyadmin/*
+phpMyAdmin
